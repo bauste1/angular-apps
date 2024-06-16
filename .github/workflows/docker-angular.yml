@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo "Wello Github Actions!"
+      - run: echo "Welcome to Github Actions!"
