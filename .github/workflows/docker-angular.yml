@@ -11,3 +11,31 @@ jobs:
 
     steps:
       - run: echo "Welcome to Github Actions!"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+
+      - uses: nrwl/nx-set-shas@v4
+
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - run: |
+          affected_apps=$(npx nx show projects --affected --target=build --base=origin/main)
+          for app in $affected_apps; do
+            echo "Building Docker image for: $app"
+            docker build -t ${{ secrets.DOCKER_USER }}/$app:latest -f ./apps/$app/Dockerfile .
+            docker tag ${{ secrets.DOCKER_USER }}/$app:latest ${{ secrets.DOCKER_USER }}/$app:DEV
+            docker push ${{ secrets.DOCKER_USER }}/$app:latest
+            docker push ${{ secrets.DOCKER_USER }}/$app:DEV
+          done
